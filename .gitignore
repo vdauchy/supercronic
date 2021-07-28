@@ -1,0 +1,4 @@
+#################################
+# Ignore IntelliJ project files
+.idea
+.idea/*
