@@ -1,3 +1,5 @@
+## From https://gist.github.com/mpneuried/0594963ad38e68917ef189b4e6a269db
+
 # import config.
 cnf ?= config.env
 include $(cnf)
@@ -5,6 +7,10 @@ export $(shell sed 's/=.*//' $(cnf))
 
 # grep the version from the mix file
 VERSION=$(shell ./version.sh)
+
+VERSION_MAJOR := $(shell echo $(VERSION) | cut -f1 -d.)
+VERSION_MINOR := $(shell echo $(VERSION_MAJOR)).$(shell echo $(VERSION) | cut -f2 -d.)
+VERSION_PATCH := $(shell echo $(VERSION_MINOR)).$(shell echo $(VERSION) | cut -f3 -d.)
 
 # HELP
 .PHONY: help
@@ -15,19 +21,32 @@ help: ## This help.
 .DEFAULT_GOAL := help
 
 # DOCKER TASKS
-build: ## Build the container
-	docker build --build-arg VERSION=$(VERSION) -t $(APP_NAME):latest  -t $(APP_NAME):$(VERSION) .
+build: ## Build the image
+	docker build \
+		--build-arg ARCH=$(ARCH) \
+		--build-arg VERSION=$(VERSION) \
+		-t $(DOCKER_REPO)/$(APP_NAME):latest \
+		-t $(DOCKER_REPO)/$(APP_NAME):$(VERSION_MAJOR) \
+		-t $(DOCKER_REPO)/$(APP_NAME):$(VERSION_MINOR) \
+		-t $(DOCKER_REPO)/$(APP_NAME):$(VERSION_PATCH) \
+		.
 
-build-nc: ## Build the container without caching
-	docker build --no-cache --build-arg VERSION=$(VERSION) -t $(APP_NAME):latest  -t $(APP_NAME):$(VERSION) .
+build-nc: ## Build the image without caching
+	docker build \
+		--no-cache \
+		--build-arg ARCH=$(ARCH) \
+		--build-arg VERSION=$(VERSION) \
+		-t $(DOCKER_REPO)/$(APP_NAME):latest \
+		-t $(DOCKER_REPO)/$(APP_NAME):$(VERSION_MAJOR) \
+		-t $(DOCKER_REPO)/$(APP_NAME):$(VERSION_MINOR) \
+		-t $(DOCKER_REPO)/$(APP_NAME):$(VERSION_PATCH) \
+		.
 
-run: ## Run container
-	docker run -i -t --rm --env-file=./config.env --name="$(APP_NAME)" $(APP_NAME)
-
-up: build run ## Run container (Alias to run)
-
-stop: ## Stop and remove a running container
-	docker stop $(APP_NAME); docker rm $(APP_NAME)
+push: ## Push the images
+	docker push $(DOCKER_REPO)/$(APP_NAME):latest
+	docker push $(DOCKER_REPO)/$(APP_NAME):$(VERSION_MAJOR)
+	docker push $(DOCKER_REPO)/$(APP_NAME):$(VERSION_MINOR)
+	docker push $(DOCKER_REPO)/$(APP_NAME):$(VERSION_PATCH)
 
 version: ## Output the current version
 	@echo $(VERSION)
