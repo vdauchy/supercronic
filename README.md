@@ -10,7 +10,7 @@ Build the image locally:
 make build
 ```
 
-Pull the latest image from dockerhub:
+Pull the latest image from dockerhub (https://hub.docker.com/r/vdauchy/supercronic):
 ```shell
 docker pull vdauchy/supercronic
 ```
